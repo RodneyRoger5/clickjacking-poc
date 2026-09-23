@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Clickjacking POC Tester</title>
+<style>
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  h2 { margin-bottom: 5px; }
+  .note { color: #555; font-size: 14px; margin-bottom: 15px; }
+  #targetUrl { width: 400px; padding: 6px; }
+  button { padding: 6px 12px; }
+  .frame-wrap {
+    position: relative;
+    width: 100%;
+    height: 600px;
+    border: 2px dashed red;
+    margin-top: 15px;
+  }
+  iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    opacity: 0.5; /* lower to 1 to simulate invisible overlay attack, raise to see clearly */
+  }
+  #status { margin-top: 10px; font-weight: bold; }
+</style>
+</head>
+<body>
+  <h2>Clickjacking Vulnerability POC</h2>
+  <p class="note">
+    Enter a target URL to test whether it can be framed (i.e., lacks X-Frame-Options / CSP frame-ancestors protection).
+    If the page loads inside the frame below, it is likely vulnerable to clickjacking.
+  </p>
+
+  <input type="text" id="targetUrl" placeholder="https://target-site.com" value="">
+  <button onclick="loadFrame()">Load in iframe</button>
+
+  <div id="status"></div>
+
+  <div class="frame-wrap">
+    <iframe id="testFrame" src="about:blank"></iframe>
+  </div>
+
+  <script>
+    function loadFrame() {
+      const url = document.getElementById('targetUrl').value.trim();
+      const status = document.getElementById('status');
+      const frame = document.getElementById('testFrame');
+
+      if (!url) {
+        status.textContent = "Please enter a URL.";
+        status.style.color = "orange";
+        return;
+      }
+
+      status.textContent = "Loading... check below. If blank/blocked, page is likely protected.";
+      status.style.color = "black";
+
+      frame.onload = function() {
+        try {
+          // Cross-origin will throw; same-origin or successful load means it's framed
+          const test = frame.contentWindow.location.href;
+          status.textContent = "Frame loaded (content accessible) - review visually.";
+          status.style.color = "green";
+        } catch (e) {
+          status.textContent = "Frame loaded (cross-origin, cannot inspect DOM) - check visually if content rendered.";
+          status.style.color = "green";
+        }
+      };
+
+      frame.onerror = function() {
+        status.textContent = "Frame failed to load - target likely blocks framing (X-Frame-Options/CSP).";
+        status.style.color = "red";
+      };
+
+      frame.src = url;
+    }
+  </script>
+
+  <hr>
+  <p class="note">
+    <b>Notes for testers:</b><br>
+    - Only test sites you own or are authorized to test.<br>
+    - If the iframe stays blank or the browser console shows "refused to display in a frame" (X-Frame-Options/CSP: frame-ancestors), the target is protected.<br>
+    - If content renders, the target is likely vulnerable — consider building a full click-hijack overlay POC to demonstrate impact, and report responsibly.<br>
+    - Toggle iframe opacity in CSS to simulate the classic "invisible overlay" attack pattern for demonstration purposes.
+  </p>
+</body>
+</html>
