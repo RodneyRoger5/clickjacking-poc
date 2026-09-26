@@ -1,0 +1,19 @@
+<html>
+<head>
+<title> Testing for Clickjacking </title>
+</head>
+<body>
+<p>Enter URL:</p> <input type="text" id="urlentered">
+<input type="button" onclick="updateiframesrc()" value="add url">
+<p> This Application is Vulnerable to clickjacking</p>
+<iframe id="iframesrc" src="" width="500" height="500"></iframe>
+<script>
+	function updateiframesrc() 
+	{
+	document.getElementById('iframesrc').src=document.getElementById('urlentered').value;
+	}
+	</script>
+	</body>
+	</html>
+	
+	
